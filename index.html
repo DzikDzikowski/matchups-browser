@@ -8,10 +8,12 @@
         :root {
             --bg-color: #121212;
             --container-bg: #1e1e1e;
+            --panel-bg: #252525;
             --text-color: #e0e0e0;
-            --accent-color: #c8aa6e; /* Złoty kolor w stylu LoL-a dla zwykłych kart */
+            --accent-color: #c8aa6e; /* Złoty kolor w stylu LoL-a */
             --pool-color: #00d2ff;   /* Kolor wyróżnienia dla Twojego poolu */
             --border-color: #333;
+            --danger-color: #ff4d4d;
         }
 
         body {
@@ -41,6 +43,13 @@
             margin-top: 0;
         }
 
+        h2 {
+            font-size: 1.1em;
+            color: var(--pool-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
         .controls {
             display: flex;
             flex-direction: column;
@@ -48,7 +57,7 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
+        .search-box {
             width: 100%;
             padding: 12px;
             font-size: 16px;
@@ -59,9 +68,83 @@
             box-sizing: border-box;
         }
 
-        input[type="text"]:focus {
+        .search-box:focus {
             outline: none;
             border-color: var(--accent-color);
+        }
+
+        /* Styl nowego panelu champion poolu */
+        .pool-management-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pool-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .pool-input {
+            flex: 1;
+            padding: 8px 12px;
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+        }
+
+        .pool-input:focus {
+            outline: none;
+            border-color: var(--pool-color);
+        }
+
+        .btn-add {
+            padding: 8px 16px;
+            background-color: #005f73;
+            color: white;
+            border: 1px solid var(--pool-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #0a9396;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .champ-tag {
+            background-color: #14213d;
+            border: 1px solid var(--pool-color);
+            color: var(--pool-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .champ-tag .remove-btn {
+            cursor: pointer;
+            color: var(--danger-color);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .champ-tag .remove-btn:hover {
+            color: #ff1a1a;
         }
 
         .file-upload {
@@ -112,14 +195,11 @@
             object-fit: cover;
         }
 
-        /* --- Zmiany dla Twojego poolu championów --- */
-
-        /* 1. Domyślnie tylko kółko ikonki jest niebieskie */
+        /* --- Style dla spersonalizowanego poolu championów --- */
         .champion-card.pool-champion .champion-icon {
             border-color: var(--pool-color);
         }
 
-        /* 2. Po najechaniu myszką ramka zmienia się na niebieską i dostaje poświatę */
         .champion-card.pool-champion:hover {
             border-color: var(--pool-color);
             box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
@@ -142,7 +222,18 @@
         <h1>Wyszukiwarka Kontr</h1>
         
         <div class="controls">
-            <input type="text" id="searchInput" placeholder="Wpisz pick przeciwnika (np. Aatrox, Garen)...">
+            <input type="text" id="searchInput" class="search-box" placeholder="Wpisz pick przeciwnika (np. Aatrox, Garen)...">
+            
+            <div class="pool-management-panel">
+                <h2>Twój Champion Pool (Niebieskie wyróżnienie)</h2>
+                <div class="pool-input-group">
+                    <input type="text" id="newChampInput" class="pool-input" placeholder="Wpisz nazwę postaci i kliknij Dodaj...">
+                    <button id="addChampBtn" class="btn-add">Dodaj</button>
+                </div>
+                <div id="tagsContainer" class="tags-container">
+                    </div>
+            </div>
+
             <div class="file-upload">
                 <label for="csvFileInput">Zaktualizuj bazę (wgraj plik CSV): </label>
                 <input type="file" id="csvFileInput" accept=".csv">
@@ -227,14 +318,14 @@ Skarner,,,,,,,,
 Varus,Yasuo,Malaphite,,,,,,
 Shyvana,,,,,,,,`;
 
-        // Lista Twoich głównych postaci
-        const myChampionPool = ['yone', 'sion', 'renekton', 'zaahen', 'ambessa'];
-
+        // Ładowanie listy z localStorage lub użycie domyślnej, jeśli pusta
+        let myChampionPool = JSON.parse(localStorage.getItem('lolMyPool')) || ['yone', 'sion', 'renekton', 'zaahen', 'ambessa'];
         let database = [];
 
         // Inicjalizacja
         function init() {
             parseCSV(defaultCSV);
+            renderPoolTags();
             setupEventListeners();
             displayResults('');
         }
@@ -286,7 +377,55 @@ Shyvana,,,,,,,,`;
             return `http://ddragon.leagueoflegends.com/cdn/16.8.1/img/champion/${name}.png`;
         }
 
-        // Wyświetlanie wyników
+        // Renderowanie wizualnych tagów w panelu zarządzania poolu
+        function renderPoolTags() {
+            const container = document.getElementById('tagsContainer');
+            container.innerHTML = '';
+            
+            myChampionPool.forEach(champ => {
+                const tag = document.createElement('div');
+                tag.className = 'champ-tag';
+                // Wyświetlamy z wielkiej litery dla estetyki
+                const formattedName = champ.charAt(0).toUpperCase() + champ.slice(1);
+                
+                tag.innerHTML = `
+                    <span>${formattedName}</span>
+                    <span class="remove-btn" onclick="removeChampionFromPool('${champ}')">&times;</span>
+                `;
+                container.appendChild(tag);
+            });
+            
+            // Zapis do localStorage, aby zmiany nie znikały po odświeżeniu
+            localStorage.setItem('lolMyPool', JSON.stringify(myChampionPool));
+        }
+
+        // Dodawanie postaci do poolu
+        function addChampionToPool() {
+            const input = document.getElementById('newChampInput');
+            const name = input.value.trim().toLowerCase();
+            
+            if (name && !myChampionPool.includes(name)) {
+                myChampionPool.push(name);
+                input.value = '';
+                renderPoolTags();
+                
+                // Odśwież wyniki wyszukiwania na bieżąco
+                const currentQuery = document.getElementById('searchInput').value;
+                displayResults(currentQuery);
+            }
+        }
+
+        // Usuwanie postaci z poolu
+        window.removeChampionFromPool = function(champName) {
+            myChampionPool = myChampionPool.filter(c => c !== champName);
+            renderPoolTags();
+            
+            // Odśwież wyniki wyszukiwania na bieżąco
+            const currentQuery = document.getElementById('searchInput').value;
+            displayResults(currentQuery);
+        }
+
+        // Wyświetlanie wyników wyszukiwania kontr
         function displayResults(query) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
@@ -318,7 +457,7 @@ Shyvana,,,,,,,,`;
             const grid = document.createElement('div');
             grid.className = 'counters-grid';
 
-            // Rozdzielanie i sortowanie kontr: najpierw główny pool, potem reszta
+            // Podział kontr dynamicznie na podstawie aktualnego stanu 'myChampionPool'
             const poolCounters = [];
             const otherCounters = [];
 
@@ -331,10 +470,8 @@ Shyvana,,,,,,,,`;
                 }
             });
 
-            // Łączenie obu list w odpowiedniej kolejności
             const sortedCounters = [...poolCounters, ...otherCounters];
 
-            // Renderowanie posortowanej listy
             sortedCounters.forEach(counter => {
                 const card = document.createElement('div');
                 card.className = 'champion-card';
@@ -358,10 +495,18 @@ Shyvana,,,,,,,,`;
 
         // Nasłuchiwanie zdarzeń
         function setupEventListeners() {
+            // Szukanie kontr live
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 displayResults(e.target.value);
             });
 
+            // Przyciski i akcje dodawania postaci do poolu
+            document.getElementById('addChampBtn').addEventListener('click', addChampionToPool);
+            document.getElementById('newChampInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addChampionToPool();
+            });
+
+            // Wgrywanie nowego pliku bazy CSV
             document.getElementById('csvFileInput').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
