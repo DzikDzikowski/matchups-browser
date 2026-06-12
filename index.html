@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwarka Matchupów LoL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Wyszukiwarka Matchupów</h1>
+        <div id="mainRoleDisplay"></div>
+        
+        <div class="controls">
+            <div class="file-upload-section" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; gap: 10px;">
+                <div>
+                    <label for="excelFileInput" style="font-size:14px; color:#ccc;">Wgraj bazę (XLSX): </label>
+                    <input type="file" id="excelFileInput" class="file-upload-input" accept=".xlsx, .xls">
+                </div>
+                <button id="downloadExcelBtn" style="background-color: transparent; border: 1px solid var(--pool-color); color: var(--pool-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background-color 0.2s, color 0.2s; white-space: nowrap;">
+                    📥 Pobierz bazę (XLSX)
+                </button>
+            </div>
+
+            <div class="pool-management-panel">
+                <h2>Twoje najlepsze picki:</h2>
+                <div class="custom-select-container">
+                    <input type="text" id="poolSearchInput" class="custom-select-input" placeholder="Wyszukaj i wybierz championa, aby dodać...">
+                    <div id="champDropdown" class="custom-select-dropdown"></div>
+                </div>
+                <div id="tagsContainer" class="tags-container"></div>
+            </div>
+
+            <input type="text" id="searchInput" class="search-box" placeholder="Wpisz pick przeciwnika (np. Aatrox, Yone)...">
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <div id="addCounterModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3 id="modalTitle" class="modal-header-title">Dodaj kontrę</h3>
+            <div class="modal-search-container">
+                <input type="text" id="modalSearchInput" class="custom-select-input" placeholder="Filtruj postacie dla tej roli...">
+            </div>
+            <div id="modalChampList" class="modal-dropdown-list"></div>
+            <button class="modal-cancel-btn" onclick="closeModal()">Anuluj</button>
+        </div>
+    </div>
+
+    <script src="js/champions.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

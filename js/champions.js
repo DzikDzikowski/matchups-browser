@@ -1,0 +1,73 @@
+const allLeagueChampions = [
+    "Aatrox", "Ahri", "Akali", "Akshan", "Alistar", "Ambessa", "Amumu", "Anivia", "Annie", "Aphelios",
+    "Ashe", "Aurelion Sol", "Aurora", "Azir", "Bard", "Bel'Veth", "Blitzcrank", "Brand", "Braum", "Briar",
+    "Caitlyn", "Camille", "Cassiopeia", "Cho'Gath", "Corki", "Darius", "Diana", "Dr. Mundo", "Draven", "Ekko",
+    "Elise", "Evelynn", "Ezreal", "Fiddlesticks", "Fiora", "Fizz", "Galio", "Gangplank", "Garen", "Gnar",
+    "Gragas", "Graves", "Gwen", "Hecarim", "Heimerdinger", "Hwei", "Illaoi", "Irelia", "Ivern", "Janna",
+    "Jarvan IV", "Jax", "Jayce", "Jhin", "Jinx", "K'Sante", "Kai'Sa", "Kalista", "Karma", "Karthus",
+    "Kassadin", "Katarina", "Kayle", "Kayn", "Kennen", "Kha'Zix", "Kindred", "Kled", "Kog'Maw", "LeBlanc",
+    "Lee Sin", "Leona", "Lillia", "Lissandra", "Locke", "Lucian", "Lulu", "Lux", "Malphite", "Malzahar", "Maokai",
+    "Master Yi", "Mel", "Milio", "Miss Fortune", "Mordekaiser", "Morgana", "Naafiri", "Nami", "Nasus", "Nautilus", "Neeko",
+    "Nidalee", "Nilah", "Nocturne", "Nunu & Willump", "Olaf", "Orianna", "Ornn", "Pantheon", "Poppy", "Pyke",
+    "Qiyana", "Quinn", "Rakan", "Rammus", "Rek'Sai", "Rell", "Renata Glasc", "Renekton", "Rengar", "Riven",
+    "Rumble", "Ryze", "Samira", "Sejuani", "Senna", "Seraphine", "Sett", "Shaco", "Shen", "Shyvana",
+    "Singed", "Sion", "Sivir", "Skarner", "Smolder", "Sona", "Soraka", "Swain", "Sylas", "Syndra",
+    "Tahm Kench", "Taliyah", "Talon", "Taric", "Teemo", "Thresh", "Tristana", "Trundle", "Tryndamere", "Twisted Fate",
+    "Twitch", "Udyr", "Urgot", "Varus", "Vayne", "Veigar", "Vel'Koz", "Vex", "Vi", "Viego",
+    "Viktor", "Vladimir", "Volibear", "Warwick", "Wukong", "Xayah", "Xerath", "Xin Zhao", "Yasuo", "Yone",
+    "Yorick", "Yunara", "Yuumi", "Zac", "Zaahen", "Zed", "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra"
+];
+
+const ROLES = ["Toplane", "Jungle", "Midlane", "Botlane", "Support"];
+
+const ROLE_ICONS = {
+    "Toplane": "⚔️ Toplane",
+    "Jungle": "🌲 Jungle",
+    "Midlane": "🔮 Midlane",
+    "Botlane": "🏹 Botlane",
+    "Support": "🛡️ Support"
+};
+
+const championRoles = {
+    "Aatrox": ["Toplane"], "Ahri": ["Midlane"], "Akali": ["Toplane", "Midlane"], "Akshan": ["Midlane"], "Alistar": ["Support"],
+    "Ambessa": ["Toplane", "Jungle"], "Amumu": ["Jungle", "Support"], "Anivia": ["Midlane"], "Annie": ["Midlane", "Support"],
+    "Aphelios": ["Botlane"], "Ashe": ["Botlane", "Support"], "Aurelion Sol": ["Midlane"], "Aurora": ["Toplane", "Midlane"],
+    "Azir": ["Midlane"], "Bard": ["Support"], "Bel'Veth": ["Jungle"], "Blitzcrank": ["Support"], "Brand": ["Jungle", "Midlane", "Support"],
+    "Braum": ["Support"], "Briar": ["Jungle"], "Caitlyn": ["Botlane"], "Camille": ["Toplane", "Support"], "Cassiopeia": ["Botlane"],
+    "Cho'Gath": ["Toplane", "Midlane"], "Corki": ["Midlane", "Botlane"], "Darius": ["Toplane"], "Diana": ["Jungle", "Midlane"],
+    "Dr. Mundo": ["Toplane"], "Draven": ["Botlane"], "Ekko": ["Jungle", "Midlane"], "Elise": ["Jungle"], "Evelynn": ["Jungle"],
+    "Ezreal": ["Botlane"], "Fiddlesticks": ["Jungle"], "Fiora": ["Toplane"], "Fizz": ["Midlane"], "Galio": ["Midlane", "Support"],
+    "Gangplank": ["Toplane"], "Garen": ["Toplane"], "Gnar": ["Toplane"], "Gragas": ["Toplane", "Jungle", "Midlane"],
+    "Graves": ["Jungle"], "Gwen": ["Toplane", "Jungle"], "Hecarim": ["Jungle"], "Heimerdinger": ["Toplane", "Midlane", "Botlane", "Support"],
+    "Hwei": ["Midlane", "Support"], "Illaoi": ["Toplane"], "Irelia": ["Toplane", "Midlane"], "Ivern": ["Jungle"], "Janna": ["Support"],
+    "Jarvan IV": ["Jungle"], "Jax": ["Toplane", "Jungle"], "Jayce": ["Toplane", "Midlane"], "Jhin": ["Botlane"], "Jinx": ["Botlane"],
+    "K'Sante": ["Toplane"], "Kai'Sa": ["Botlane"], "Kalista": ["Botlane"], "Karma": ["Toplane", "Midlane", "Support"],
+    "Karthus": ["Jungle", "Botlane"], "Kassadin": ["Midlane"], "Katarina": ["Midlane"], "Kayle": ["Toplane", "Midlane"],
+    "Kayn": ["Jungle"], "Kennen": ["Toplane"], "Kha'Zix": ["Jungle"], "Kindred": ["Jungle"], "Kled": ["Toplane"],
+    "Kog'Maw": ["Botlane"], "LeBlanc": ["Midlane"], "Lee Sin": ["Jungle"], "Leona": ["Support"], "Lillia": ["Jungle"],
+    "Lissandra": ["Midlane"], "Locke": ["Midlane"], "Lucian": ["Midlane", "Botlane"], "Lulu": ["Support"], "Lux": ["Midlane", "Support"],
+    "Malphite": ["Toplane", "Midlane"], "Malzahar": ["Midlane"], "Maokai": ["Toplane", "Jungle", "Support"], "Master Yi": ["Jungle"],
+    "Mel": ["Midlane", "Botlane"], "Milio": ["Support"], "Miss Fortune": ["Botlane"], "Mordekaiser": ["Toplane"],
+    "Morgana": ["Jungle", "Midlane", "Support"], "Naafiri": ["Jungle", "Midlane"], "Nami": ["Support"], "Nasus": ["Toplane"],
+    "Nautilus": ["Support"], "Neeko": ["Midlane", "Botlane", "Support"], "Nidalee": ["Jungle"], "Nilah": ["Botlane"],
+    "Nocturne": ["Jungle"], "Nunu & Willump": ["Jungle"], "Olaf": ["Toplane", "Jungle"], "Orianna": ["Midlane"],
+    "Ornn": ["Toplane"], "Pantheon": ["Toplane", "Midlane", "Support"], "Poppy": ["Toplane", "Jungle", "Support"],
+    "Pyke": ["Midlane", "Support"], "Qiyana": ["Jungle", "Midlane"], "Rakan": ["Support"], "Rammus": ["Jungle"],
+    "Rek'Sai": ["Jungle"], "Rell": ["Support"], "Renata Glasc": ["Support"], "Renekton": ["Toplane"], "Rengar": ["Toplane", "Jungle"],
+    "Riven": ["Toplane"], "Rumble": ["Toplane", "Jungle", "Midlane"], "Ryze": ["Toplane", "Midlane"], "Samira": ["Botlane"],
+    "Sejuani": ["Toplane", "Jungle"], "Senna": ["Botlane", "Support"], "Seraphine": ["Midlane", "Botlane", "Support"],
+    "Sett": ["Toplane", "Support"], "Shaco": ["Jungle", "Support"], "Shen": ["Toplane", "Support"], "Shyvana": ["Jungle"],
+    "Singed": ["Toplane"], "Sion": ["Toplane"], "Sivir": ["Botlane"], "Skarner": ["Toplane", "Jungle"], "Smolder": ["Midlane", "Botlane"],
+    "Sona": ["Support"], "Soraka": ["Support"], "Swain": ["Midlane", "Botlane", "Support"], "Sylas": ["Jungle", "Midlane"],
+    "Syndra": ["Midlane", "Botlane"], "Tahm Kench": ["Toplane"], "Taliyah": ["Jungle", "Midlane"], "Talon": ["Jungle", "Midlane"],
+    "Taric": ["Support"], "Teemo": ["Toplane"], "Thresh": ["Support"], "Tristana": ["Midlane", "Botlane"], "Trundle": ["Toplane"],
+    "Tryndamere": ["Toplane", "Midlane"], "Twisted Fate": ["Toplane", "Midlane"], "Twitch": ["Jungle", "Botlane", "Support"],
+    "Udyr": ["Toplane", "Jungle"], "Urgot": ["Toplane"], "Varus": ["Midlane", "Botlane"], "Vayne": ["Toplane", "Botlane"],
+    "Veigar": ["Midlane", "Botlane"], "Vel'Koz": ["Midlane", "Botlane", "Support"], "Vex": ["Midlane"], "Vi": ["Jungle"],
+    "Viego": ["Jungle", "Midlane"], "Viktor": ["Midlane"], "Vladimir": ["Toplane", "Midlane"], "Volibear": ["Toplane", "Jungle"],
+    "Warwick": ["Toplane", "Jungle"], "Wukong": ["Toplane", "Jungle"], "Xayah": ["Botlane"], "Xerath": ["Midlane", "Support"],
+    "Xin Zhao": ["Jungle"], "Yasuo": ["Toplane", "Midlane", "Botlane"], "Yone": ["Toplane", "Midlane"], "Yorick": ["Toplane"],
+    "Yunara": ["Botlane"], "Yuumi": ["Support"], "Zac": ["Toplane", "Jungle", "Support"], "Zaahen": ["Toplane", "Jungle"],
+    "Zed": ["Jungle", "Midlane"], "Zeri": ["Botlane"], "Ziggs": ["Midlane", "Botlane"], "Zilean": ["Midlane", "Support"],
+    "Zoe": ["Midlane"], "Zyra": ["Jungle", "Midlane", "Support"]
+};
