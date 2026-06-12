@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wyszukiwarka Matchupów LoL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -41,6 +42,24 @@
             text-align: center;
             color: var(--accent-color);
             margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        #mainRoleDisplay {
+            text-align: center;
+            margin-bottom: 20px;
+            height: 24px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background-color: rgba(200, 170, 110, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         h2 {
@@ -275,6 +294,7 @@
 
     <div class="container">
         <h1>Wyszukiwarka Kontr</h1>
+        <div id="mainRoleDisplay"></div>
         
         <div class="controls">
             <input type="text" id="searchInput" class="search-box" placeholder="Wpisz pick przeciwnika (np. Aatrox, Garen)...">
@@ -293,8 +313,8 @@
             </div>
 
             <div class="file-upload">
-                <label for="csvFileInput">Wgraj plik z bazą danych (CSV): </label>
-                <input type="file" id="csvFileInput" accept=".csv">
+                <label for="excelFileInput">Wgraj szablon z bazą danych (XLSX): </label>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls">
             </div>
         </div>
 
@@ -325,6 +345,15 @@
 
         let myChampionPool = JSON.parse(localStorage.getItem('lolMyPool')) || ['yone', 'sion', 'renekton', 'ambessa'];
         let database = [];
+        let mainRole = "";
+
+        const roleIcons = {
+            "Toplane": "⚔️ Toplane",
+            "Jungle": "🌲 Jungle",
+            "Midlane": "🔮 Midlane",
+            "Botlane": "🏹 Botlane",
+            "Support": "🛡️ Support"
+        };
 
         function normalizeChampionName(name) {
             let trimmed = name.trim();
@@ -341,8 +370,14 @@
         }
 
         function init() {
-            // Zawsze zaczynamy od czystej bazy po odświeżeniu
-            database = []; 
+            // Próba wczytania przetworzonej bazy JSON z XLSX
+            const savedData = localStorage.getItem('lolMatchupProcessedDB');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                database = parsed.db || [];
+                mainRole = parsed.role || "";
+                renderMainRole();
+            }
 
             populateDropdown('');
             renderPoolTags();
@@ -350,21 +385,78 @@
             displayResults('');
         }
 
-        function parseCSV(csvText) {
-            database = [];
-            const lines = csvText.split('\n');
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
+        function renderMainRole() {
+            const container = document.getElementById('mainRoleDisplay');
+            if (mainRole && database.length > 0) {
+                const displayRole = roleIcons[mainRole] || mainRole;
+                container.innerHTML = `<span class="role-badge">Twoja główna rola: ${displayRole}</span>`;
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        // Nowa funkcja do przetwarzania pliku XLSX
+        function processExcelFile(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+            let combinedCounters = {};
+            let roleStats = {};
+
+            // Iterujemy przez wszystkie skoroszyty (zakładki)
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                // Konwersja skoroszytu do tablicy (Array of Arrays)
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {header: 1});
                 
-                const parts = line.split(',');
-                const enemy = normalizeChampionName(parts[0]);
-                const counters = parts.slice(1).map(c => normalizeChampionName(c)).filter(c => c !== '');
-                
-                if (enemy) {
-                    database.push({ enemy, counters });
+                let validCountersInSheet = 0;
+
+                // Zaczynamy od i=1, bo i=0 to nagłówki
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || !row[0]) continue; // Pomijamy puste rzędy i rzędy bez enemy
+
+                    const enemy = normalizeChampionName(row[0]);
+                    
+                    // Zbieramy wpisane kontry
+                    for (let j = 1; j < row.length; j++) {
+                        const cell = row[j];
+                        if (cell && typeof cell === 'string' && cell.trim() !== '') {
+                            const counterChamp = normalizeChampionName(cell);
+                            
+                            // Zliczamy do statystyk dla Main Roli
+                            validCountersInSheet++;
+
+                            // Zapisujemy do głównej mapy (używamy struktury Set, by unikać duplikatów)
+                            if (!combinedCounters[enemy]) {
+                                combinedCounters[enemy] = new Set();
+                            }
+                            combinedCounters[enemy].add(counterChamp);
+                        }
+                    }
+                }
+                roleStats[sheetName] = validCountersInSheet;
+            });
+
+            // Ustalanie Main Roli na podstawie tego, gdzie wpisano najwięcej kontr
+            let maxScore = -1;
+            let currentMainRole = "";
+            for (const [role, score] of Object.entries(roleStats)) {
+                if (score > maxScore && score > 0) {
+                    maxScore = score;
+                    currentMainRole = role;
                 }
             }
+
+            // Przekształcanie obiektu combinedCounters z powrotem na tablicę database
+            database = [];
+            for (const [enemy, countersSet] of Object.entries(combinedCounters)) {
+                database.push({ enemy: enemy, counters: Array.from(countersSet) });
+            }
+            mainRole = currentMainRole;
+
+            // Zapis do localStorage pod nowym kluczem
+            localStorage.setItem('lolMatchupProcessedDB', JSON.stringify({ db: database, role: mainRole }));
+            
+            renderMainRole();
         }
 
         function getImageUrl(champName) {
@@ -473,7 +565,7 @@
             container.innerHTML = '';
 
             if (database.length === 0) {
-                container.innerHTML = '<div class="upload-prompt">Wgraj plik z bazą danych (CSV) w panelu powyżej, aby móc korzystać z wyszukiwarki.</div>';
+                container.innerHTML = '<div class="upload-prompt">Wgraj plik z bazą danych w formacie Excel (XLSX) w panelu powyżej, aby móc korzystać z wyszukiwarki.</div>';
                 return;
             }
 
@@ -487,7 +579,7 @@
                           database.find(entry => entry.enemy.toLowerCase().includes(searchLower));
 
             if (!match) {
-                container.innerHTML = '<div class="no-results">Nie znaleziono takiego championa w bazie.</div>';
+                container.innerHTML = '<div class="no-results">Nie znaleziono przypisanych kontr dla tego championa w Twojej bazie.</div>';
                 return;
             }
 
@@ -563,20 +655,25 @@
                 }
             });
 
-            document.getElementById('csvFileInput').addEventListener('change', (e) => {
+            // Obsługa wgrywania pliku Excel
+            document.getElementById('excelFileInput').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
+                    // Zmiana czytania z tekstu na dane binarne (ArrayBuffer), konieczne do xlsx
                     reader.onload = function(event) {
-                        const text = event.target.result;
-                        // Usunięto zapisywanie bazy do localStorage
-                        parseCSV(text);
-                        alert('Baza danych została wgrana pomyślnie!');
-                        
-                        const currentQuery = document.getElementById('searchInput').value;
-                        displayResults(currentQuery);
+                        try {
+                            const data = new Uint8Array(event.target.result);
+                            processExcelFile(data);
+                            alert('Baza danych z pliku Excel została wgrana pomyślnie!');
+                            const currentQuery = document.getElementById('searchInput').value;
+                            displayResults(currentQuery);
+                        } catch (error) {
+                            alert('Wystąpił błąd podczas odczytu pliku. Upewnij się, że to poprawny plik .xlsx z podziałem na role.');
+                            console.error(error);
+                        }
                     };
-                    reader.readAsText(file);
+                    reader.readAsArrayBuffer(file);
                 }
             });
         }
