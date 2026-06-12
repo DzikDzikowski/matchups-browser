@@ -10,8 +10,8 @@
             --container-bg: #1e1e1e;
             --panel-bg: #252525;
             --text-color: #e0e0e0;
-            --accent-color: #c8aa6e; /* Złoty kolor w stylu LoL-a */
-            --pool-color: #00d2ff;   /* Kolor wyróżnienia dla Twojego poolu */
+            --accent-color: #c8aa6e; 
+            --pool-color: #00d2ff;     
             --border-color: #333;
             --danger-color: #ff4d4d;
         }
@@ -45,7 +45,7 @@
 
         h2 {
             font-size: 1.1em;
-            color: var(--pool-color);
+            color: var(--accent-color);
             margin-top: 0;
             margin-bottom: 10px;
         }
@@ -73,7 +73,6 @@
             border-color: var(--accent-color);
         }
 
-        /* Styl nowego panelu champion poolu */
         .pool-management-panel {
             background-color: var(--panel-bg);
             border: 1px solid #444;
@@ -82,39 +81,74 @@
             margin-bottom: 20px;
         }
 
-        .pool-input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
+        .custom-select-container {
+            position: relative;
+            margin-bottom: 15px;
         }
 
-        .pool-input {
-            flex: 1;
-            padding: 8px 12px;
+        .custom-select-input {
+            width: 100%;
+            padding: 10px 12px;
             background-color: #1a1a1a;
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 4px;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
         }
 
-        .pool-input:focus {
+        .custom-select-input:focus {
             outline: none;
             border-color: var(--pool-color);
         }
 
-        .btn-add {
-            padding: 8px 16px;
-            background-color: #005f73;
-            color: white;
-            border: 1px solid var(--pool-color);
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
+            z-index: 100;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .custom-select-dropdown.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             cursor: pointer;
-            font-weight: bold;
+            border-bottom: 1px solid #333;
             transition: background-color 0.2s;
         }
 
-        .btn-add:hover {
-            background-color: #0a9396;
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #3a3a3a;
+        }
+
+        .dropdown-item img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--accent-color);
+            object-fit: cover;
+            background-color: #121212;
         }
 
         .tags-container {
@@ -124,7 +158,7 @@
         }
 
         .champ-tag {
-            background-color: #14213d;
+            background-color: #101b2b; 
             border: 1px solid var(--pool-color);
             color: var(--pool-color);
             padding: 4px 10px;
@@ -138,13 +172,13 @@
 
         .champ-tag .remove-btn {
             cursor: pointer;
-            color: var(--danger-color);
+            color: #888;
             font-weight: bold;
             font-size: 14px;
         }
 
         .champ-tag .remove-btn:hover {
-            color: #ff1a1a;
+            color: var(--danger-color);
         }
 
         .file-upload {
@@ -178,7 +212,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
         }
 
         .champion-card:hover {
@@ -195,14 +229,18 @@
             object-fit: cover;
         }
 
-        /* --- Style dla spersonalizowanego poolu championów --- */
+        .champion-card.pool-champion {
+            background-color: rgba(0, 210, 255, 0.05); 
+            border-color: rgba(0, 210, 255, 0.3);
+        }
+
         .champion-card.pool-champion .champion-icon {
-            border-color: var(--pool-color);
+            border-color: var(--pool-color); 
         }
 
         .champion-card.pool-champion:hover {
-            border-color: var(--pool-color);
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+            border-color: var(--pool-color); 
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.5); 
         }
 
         .champion-name {
@@ -212,6 +250,23 @@
 
         .no-results {
             color: #888;
+            font-style: italic;
+        }
+
+        .upload-prompt {
+            color: var(--accent-color);
+            font-size: 1.1em;
+            text-align: center;
+            padding: 30px 10px;
+            border: 1px dashed var(--accent-color);
+            border-radius: 8px;
+            background-color: rgba(200, 170, 110, 0.05);
+        }
+        
+        .no-suggestions {
+            padding: 12px;
+            color: #777;
+            text-align: center;
             font-style: italic;
         }
     </style>
@@ -225,17 +280,20 @@
             <input type="text" id="searchInput" class="search-box" placeholder="Wpisz pick przeciwnika (np. Aatrox, Garen)...">
             
             <div class="pool-management-panel">
-                <h2>Twój Champion Pool (Niebieskie wyróżnienie)</h2>
-                <div class="pool-input-group">
-                    <input type="text" id="newChampInput" class="pool-input" placeholder="Wpisz nazwę postaci i kliknij Dodaj...">
-                    <button id="addChampBtn" class="btn-add">Dodaj</button>
-                </div>
-                <div id="tagsContainer" class="tags-container">
+                <h2>Twoje najlepsze picki:</h2>
+                
+                <div class="custom-select-container">
+                    <input type="text" id="poolSearchInput" class="custom-select-input" placeholder="Wyszukaj i wybierz championa, aby dodać...">
+                    <div id="champDropdown" class="custom-select-dropdown">
                     </div>
+                </div>
+
+                <div id="tagsContainer" class="tags-container">
+                </div>
             </div>
 
             <div class="file-upload">
-                <label for="csvFileInput">Zaktualizuj bazę (wgraj plik CSV): </label>
+                <label for="csvFileInput">Wgraj plik z bazą danych (CSV): </label>
                 <input type="file" id="csvFileInput" accept=".csv">
             </div>
         </div>
@@ -245,92 +303,53 @@
     </div>
 
     <script>
-        // Domyślna baza danych osadzona w kodzie
-        const defaultCSV = `Pick enemy,Kontra 1,Kontra 2,Kontra 3,Kontra 4,Kontra 5,Kontra 6,Kontra 7,Kontra 8
-Aatrox,Yone,Ambessa,Renekton,,,,,
-Akali,Sion,,,,,,,
-Camille,Renekton,Yone,,,,,,
-Cho'Gath,Yone ,Zaahen,Ambessa,,,,,
-Darius,Yone,,,,,,,
-Dr. Mundo,Yone,Zaahen,,,,,,
-Fiora,Ambessa,Renekton,Rumble,Jayce,,,,
-Gangplank,Yone,,,,,,,
-Garen,Ambessa,Renekton,Rumble,Jayce,,,,
-Gnar,Yasuo,Yone,Rumble,Jayce,,,,
-Illaoi,Yasuo,,,,,,,
-Irelia,,,,,,,,
-Jax,Sion,,,,,,,
-Jayce,Yasuo,,,,,,,
-Kayle,Ambessa,Yone,,,,,,
-Kled,,,,,,,,
-K'Sante,Ambessa,,,,,,,
-Malphite,Rumble,,,,,,,
-Maokai,Aatrox,Ambessa,Yone,,,,,
-Mordekaiser,Yone,,,,,,,
-Nasus,Zaahen,,,,,,,
-Ornn,Yone,Zaahen,Ambessa,,,,,
-Pantheon,Orn,Sion,,,,,,
-Quinn,Malaphte,,,,,,,
-Renekton,Sion,Orn,,,,,,
-Rengar,,,,,,,,
-Riven,Zaahen,Renkton,,,,,,
-Rumble,Aatrox,Yasuo,,,,,,
-Ryze,Yasuo,,,,,,,
-Sett,Renekton,,,,,,,
-Shen,Rumble,Ambessa,Zaahen,,,,,
-Singed,Zaahen,Yone,,,,,,
-Sion,Yone,Zaahen,Ambessa,,,,,
-Swain,Yasuo,Yone,Zaahen,,,,,
-Teemo,,,,,,,,
-Trundle,,,,,,,,
-Tryndamere,Malaphite,Renekton,,,,,,
-Urgot,k'sante,,,,,,,
-Vayne,Malaphite,,,,,,,
-Vladimir,Yone,Zaahen,,,,,,
-Volibear,Zaahen,Renekton,,,,,,
-Warwick,,,,,,,,
-Wukong,Ambessa,Zahhen,SIon,Orn,,,,
-Yasuo,Renekton,,,,,,,
-Yone,Renekton,,,,,,,
-Yorick,Yone,Yasuo,,,,,,
-Zac,Zaahen,,,,,,,
-Kennen,,,,,,,,
-Zaahen,wszystkoxd,,,,,,,
-Gwen,Yone,,,,,,,
-Ambessa,Renekton,Yasuo,,,,,,
-Smolder,,,,,,,,
-Aurora,Yasuo,,,,,,,
-Olaf,Orn,,,,,,,
-Poppy,,,,,,,,
-Rek'Sai,,,,,,,,
-Udyr,,,,,,,,
-Sylas,Zaahen,Yasuo,,,,,,
-Gragas,Zaahen,Ambessa,,,,,,
-Akshan,Yasuo,Malaphite,,,,,,
-Sejuani,,,,,,,,
-Graves,,,,,,,,
-Heimerdinger,Yasuo,,,,,,,
-Karma,Yasuo,Ambessa,SIon,,,,,
-Naafiri,,,,,,,,
-Cassiopeia,Yasuo,,,,,,,
-Tahm Kench,,,,,,,,
-Skarner,,,,,,,,
-Varus,Yasuo,Malaphite,,,,,,
-Shyvana,,,,,,,,`;
+        const allLeagueChampions = [
+            "Aatrox", "Ahri", "Akali", "Akshan", "Alistar", "Ambessa", "Amumu", "Anivia", "Annie", "Aphelios",
+            "Ashe", "Aurelion Sol", "Aurora", "Azir", "Bard", "Bel'Veth", "Blitzcrank", "Brand", "Braum", "Briar",
+            "Caitlyn", "Camille", "Cassiopeia", "Cho'Gath", "Corki", "Darius", "Diana", "Dr. Mundo", "Draven", "Ekko",
+            "Elise", "Evelynn", "Ezreal", "Fiddlesticks", "Fiora", "Fizz", "Galio", "Gangplank", "Garen", "Gnar",
+            "Gragas", "Graves", "Gwen", "Hecarim", "Heimerdinger", "Hwei", "Illaoi", "Irelia", "Ivern", "Janna",
+            "Jarvan IV", "Jax", "Jayce", "Jhin", "Jinx", "K'Sante", "Kai'Sa", "Kalista", "Karma", "Karthus",
+            "Kassadin", "Katarina", "Kayle", "Kayn", "Kennen", "Kha'Zix", "Kindred", "Kled", "Kog'Maw", "LeBlanc",
+            "Lee Sin", "Leona", "Lillia", "Lissandra", "Locke", "Lucian", "Lulu", "Lux", "Malphite", "Malzahar", "Maokai",
+            "Master Yi", "Mel", "Milio", "Miss Fortune", "Mordekaiser", "Morgana", "Naafiri", "Nami", "Nasus", "Nautilus", "Neeko",
+            "Nidalee", "Nilah", "Nocturne", "Nunu & Willump", "Olaf", "Orianna", "Ornn", "Pantheon", "Poppy", "Pyke",
+            "Qiyana", "Quinn", "Rakan", "Rammus", "Rek'Sai", "Rell", "Renata Glasc", "Renekton", "Rengar", "Riven",
+            "Rumble", "Ryze", "Samira", "Sejuani", "Senna", "Seraphine", "Sett", "Shaco", "Shen", "Shyvana",
+            "Singed", "Sion", "Sivir", "Skarner", "Smolder", "Sona", "Soraka", "Swain", "Sylas", "Syndra",
+            "Tahm Kench", "Taliyah", "Talon", "Taric", "Teemo", "Thresh", "Tristana", "Trundle", "Tryndamere", "Twisted Fate",
+            "Twitch", "Udyr", "Urgot", "Varus", "Vayne", "Veigar", "Vel'Koz", "Vex", "Vi", "Viego",
+            "Viktor", "Vladimir", "Volibear", "Warwick", "Wukong", "Xayah", "Xerath", "Xin Zhao", "Yasuo", "Yone",
+            "Yorick", "Yunara", "Yuumi", "Zac", "Zaahen", "Zed", "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra"
+        ];
 
-        // Ładowanie listy z localStorage lub użycie domyślnej, jeśli pusta
-        let myChampionPool = JSON.parse(localStorage.getItem('lolMyPool')) || ['yone', 'sion', 'renekton', 'zaahen', 'ambessa'];
+        let myChampionPool = JSON.parse(localStorage.getItem('lolMyPool')) || ['yone', 'sion', 'renekton', 'ambessa'];
         let database = [];
 
-        // Inicjalizacja
+        function normalizeChampionName(name) {
+            let trimmed = name.trim();
+            let lower = trimmed.toLowerCase();
+            const corrections = {
+                "malaphite": "Malphite",
+                "malaphte": "Malphite",
+                "renkton": "Renekton",
+                "orn": "Ornn",
+                "zahhen": "Zaahen",
+                "k'sante": "K'Sante"
+            };
+            return corrections[lower] || trimmed;
+        }
+
         function init() {
-            parseCSV(defaultCSV);
+            // Zawsze zaczynamy od czystej bazy po odświeżeniu
+            database = []; 
+
+            populateDropdown('');
             renderPoolTags();
             setupEventListeners();
             displayResults('');
         }
 
-        // Parsowanie tekstu CSV do tablicy obiektów
         function parseCSV(csvText) {
             database = [];
             const lines = csvText.split('\n');
@@ -339,10 +358,8 @@ Shyvana,,,,,,,,`;
                 if (!line) continue;
                 
                 const parts = line.split(',');
-                const enemy = parts[0].trim();
-                const counters = parts.slice(1)
-                                      .map(c => c.trim())
-                                      .filter(c => c !== '');
+                const enemy = normalizeChampionName(parts[0]);
+                const counters = parts.slice(1).map(c => normalizeChampionName(c)).filter(c => c !== '');
                 
                 if (enemy) {
                     database.push({ enemy, counters });
@@ -350,34 +367,72 @@ Shyvana,,,,,,,,`;
             }
         }
 
-        // Przygotowanie linku do obrazka
         function getImageUrl(champName) {
             let name = champName;
-            const overrides = {
-                "malaphite": "Malphite",
-                "malaphte": "Malphite",
-                "renkton": "Renekton",
-                "orn": "Ornn",
-                "sion": "Sion",
+            const exceptions = {
+                "wukong": "MonkeyKing",
+                "dr. mundo": "DrMundo",
                 "k'sante": "KSante",
                 "cho'gath": "Chogath",
-                "dr. mundo": "DrMundo",
-                "wukong": "MonkeyKing",
-                "rek'sai": "RekSai"
+                "rek'sai": "RekSai",
+                "bel'veth": "Belveth",
+                "kai'sa": "Kaisa",
+                "kha'zix": "Khazix",
+                "leblanc": "Leblanc",
+                "vel'koz": "Velkoz",
+                "kog'maw": "KogMaw",
+                "nunu & willump": "Nunu",
+                "renata glasc": "Renata",
+                "jarvan iv": "JarvanIV"
             };
 
-            const lowerName = name.toLowerCase();
-            if (overrides[lowerName]) {
-                name = overrides[lowerName];
+            const lowerName = name.toLowerCase().trim();
+            if (exceptions[lowerName]) {
+                name = exceptions[lowerName];
             } else {
-                name = name.replace(/['\s.]/g, '');
-                name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+                name = name.split(/[\s'.]+/).map(part => {
+                    if(!part) return "";
+                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                }).join('');
             }
 
             return `http://ddragon.leagueoflegends.com/cdn/16.8.1/img/champion/${name}.png`;
         }
 
-        // Renderowanie wizualnych tagów w panelu zarządzania poolu
+        function populateDropdown(filterText) {
+            const dropdown = document.getElementById('champDropdown');
+            dropdown.innerHTML = '';
+
+            const searchLower = filterText.toLowerCase();
+            const filtered = allLeagueChampions.filter(champ => champ.toLowerCase().includes(searchLower));
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="no-suggestions">Nie znaleziono postaci</div>';
+                return;
+            }
+
+            filtered.forEach(champName => {
+                const champLower = champName.toLowerCase();
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                
+                const imgUrl = getImageUrl(champName);
+                
+                item.innerHTML = `
+                    <img src="${imgUrl}" alt="${champName}" onerror="this.style.opacity='0'">
+                    <span>${champName}</span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    addChampionToPool(champLower);
+                    dropdown.classList.remove('show');
+                    document.getElementById('poolSearchInput').value = ''; 
+                });
+                
+                dropdown.appendChild(item);
+            });
+        }
+
         function renderPoolTags() {
             const container = document.getElementById('tagsContainer');
             container.innerHTML = '';
@@ -385,8 +440,7 @@ Shyvana,,,,,,,,`;
             myChampionPool.forEach(champ => {
                 const tag = document.createElement('div');
                 tag.className = 'champ-tag';
-                // Wyświetlamy z wielkiej litery dla estetyki
-                const formattedName = champ.charAt(0).toUpperCase() + champ.slice(1);
+                const formattedName = champ.split(/[\s'.]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
                 
                 tag.innerHTML = `
                     <span>${formattedName}</span>
@@ -395,43 +449,36 @@ Shyvana,,,,,,,,`;
                 container.appendChild(tag);
             });
             
-            // Zapis do localStorage, aby zmiany nie znikały po odświeżeniu
             localStorage.setItem('lolMyPool', JSON.stringify(myChampionPool));
         }
 
-        // Dodawanie postaci do poolu
-        function addChampionToPool() {
-            const input = document.getElementById('newChampInput');
-            const name = input.value.trim().toLowerCase();
-            
+        function addChampionToPool(name) {
             if (name && !myChampionPool.includes(name)) {
                 myChampionPool.push(name);
-                input.value = '';
                 renderPoolTags();
-                
-                // Odśwież wyniki wyszukiwania na bieżąco
                 const currentQuery = document.getElementById('searchInput').value;
                 displayResults(currentQuery);
             }
         }
 
-        // Usuwanie postaci z poolu
         window.removeChampionFromPool = function(champName) {
             myChampionPool = myChampionPool.filter(c => c !== champName);
             renderPoolTags();
-            
-            // Odśwież wyniki wyszukiwania na bieżąco
             const currentQuery = document.getElementById('searchInput').value;
             displayResults(currentQuery);
         }
 
-        // Wyświetlanie wyników wyszukiwania kontr
         function displayResults(query) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
 
+            if (database.length === 0) {
+                container.innerHTML = '<div class="upload-prompt">Wgraj plik z bazą danych (CSV) w panelu powyżej, aby móc korzystać z wyszukiwarki.</div>';
+                return;
+            }
+
             if (!query) {
-                container.innerHTML = '<div class="no-results">Wpisz nazwę championa, aby zobaczyć kontry.</div>';
+                container.innerHTML = '<div class="no-results">Wpisz nazwę championa przeciwnika, aby zobaczyć kontry.</div>';
                 return;
             }
 
@@ -457,7 +504,6 @@ Shyvana,,,,,,,,`;
             const grid = document.createElement('div');
             grid.className = 'counters-grid';
 
-            // Podział kontr dynamicznie na podstawie aktualnego stanu 'myChampionPool'
             const poolCounters = [];
             const otherCounters = [];
 
@@ -493,31 +539,42 @@ Shyvana,,,,,,,,`;
             container.appendChild(grid);
         }
 
-        // Nasłuchiwanie zdarzeń
         function setupEventListeners() {
-            // Szukanie kontr live
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 displayResults(e.target.value);
             });
 
-            // Przyciski i akcje dodawania postaci do poolu
-            document.getElementById('addChampBtn').addEventListener('click', addChampionToPool);
-            document.getElementById('newChampInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') addChampionToPool();
+            const poolSearchInput = document.getElementById('poolSearchInput');
+            const dropdown = document.getElementById('champDropdown');
+
+            poolSearchInput.addEventListener('input', (e) => {
+                populateDropdown(e.target.value);
+                dropdown.classList.add('show');
             });
 
-            // Wgrywanie nowego pliku bazy CSV
+            poolSearchInput.addEventListener('focus', () => {
+                populateDropdown(poolSearchInput.value);
+                dropdown.classList.add('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!poolSearchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
             document.getElementById('csvFileInput').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const text = event.target.result;
+                        // Usunięto zapisywanie bazy do localStorage
                         parseCSV(text);
-                        alert('Baza danych została zaktualizowana!');
+                        alert('Baza danych została wgrana pomyślnie!');
                         
                         const currentQuery = document.getElementById('searchInput').value;
-                        if (currentQuery) displayResults(currentQuery);
+                        displayResults(currentQuery);
                     };
                     reader.readAsText(file);
                 }
