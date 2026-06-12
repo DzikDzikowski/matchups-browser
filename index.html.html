@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwarka Matchupów LoL</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #c8aa6e; /* Złoty kolor w stylu LoL-a dla zwykłych kart */
+            --pool-color: #00d2ff;   /* Kolor wyróżnienia dla Twojego poolu */
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            margin-top: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .file-upload {
+            font-size: 14px;
+            color: #aaa;
+            padding: 10px;
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .results-header {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .champion-card {
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .champion-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-color);
+        }
+
+        .champion-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            margin-bottom: 8px;
+            object-fit: cover;
+        }
+
+        /* --- Zmiany dla Twojego poolu championów --- */
+
+        /* 1. Domyślnie tylko kółko ikonki jest niebieskie */
+        .champion-card.pool-champion .champion-icon {
+            border-color: var(--pool-color);
+        }
+
+        /* 2. Po najechaniu myszką ramka zmienia się na niebieską i dostaje poświatę */
+        .champion-card.pool-champion:hover {
+            border-color: var(--pool-color);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+        }
+
+        .champion-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .no-results {
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Wyszukiwarka Kontr</h1>
+        
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Wpisz pick przeciwnika (np. Aatrox, Garen)...">
+            <div class="file-upload">
+                <label for="csvFileInput">Zaktualizuj bazę (wgraj plik CSV): </label>
+                <input type="file" id="csvFileInput" accept=".csv">
+            </div>
+        </div>
+
+        <div id="resultsContainer">
+            </div>
+    </div>
+
+    <script>
+        // Domyślna baza danych osadzona w kodzie
+        const defaultCSV = `Pick enemy,Kontra 1,Kontra 2,Kontra 3,Kontra 4,Kontra 5,Kontra 6,Kontra 7,Kontra 8
+Aatrox,Yone,Ambessa,Renekton,,,,,
+Akali,Sion,,,,,,,
+Camille,Renekton,Yone,,,,,,
+Cho'Gath,Yone ,Zaahen,Ambessa,,,,,
+Darius,Yone,,,,,,,
+Dr. Mundo,Yone,Zaahen,,,,,,
+Fiora,Ambessa,Renekton,Rumble,Jayce,,,,
+Gangplank,Yone,,,,,,,
+Garen,Ambessa,Renekton,Rumble,Jayce,,,,
+Gnar,Yasuo,Yone,Rumble,Jayce,,,,
+Illaoi,Yasuo,,,,,,,
+Irelia,,,,,,,,
+Jax,Sion,,,,,,,
+Jayce,Yasuo,,,,,,,
+Kayle,Ambessa,Yone,,,,,,
+Kled,,,,,,,,
+K'Sante,Ambessa,,,,,,,
+Malphite,Rumble,,,,,,,
+Maokai,Aatrox,Ambessa,Yone,,,,,
+Mordekaiser,Yone,,,,,,,
+Nasus,Zaahen,,,,,,,
+Ornn,Yone,Zaahen,Ambessa,,,,,
+Pantheon,Orn,Sion,,,,,,
+Quinn,Malaphte,,,,,,,
+Renekton,Sion,Orn,,,,,,
+Rengar,,,,,,,,
+Riven,Zaahen,Renkton,,,,,,
+Rumble,Aatrox,Yasuo,,,,,,
+Ryze,Yasuo,,,,,,,
+Sett,Renekton,,,,,,,
+Shen,Rumble,Ambessa,Zaahen,,,,,
+Singed,Zaahen,Yone,,,,,,
+Sion,Yone,Zaahen,Ambessa,,,,,
+Swain,Yasuo,Yone,Zaahen,,,,,
+Teemo,,,,,,,,
+Trundle,,,,,,,,
+Tryndamere,Malaphite,Renekton,,,,,,
+Urgot,k'sante,,,,,,,
+Vayne,Malaphite,,,,,,,
+Vladimir,Yone,Zaahen,,,,,,
+Volibear,Zaahen,Renekton,,,,,,
+Warwick,,,,,,,,
+Wukong,Ambessa,Zahhen,SIon,Orn,,,,
+Yasuo,Renekton,,,,,,,
+Yone,Renekton,,,,,,,
+Yorick,Yone,Yasuo,,,,,,
+Zac,Zaahen,,,,,,,
+Kennen,,,,,,,,
+Zaahen,wszystkoxd,,,,,,,
+Gwen,Yone,,,,,,,
+Ambessa,Renekton,Yasuo,,,,,,
+Smolder,,,,,,,,
+Aurora,Yasuo,,,,,,,
+Olaf,Orn,,,,,,,
+Poppy,,,,,,,,
+Rek'Sai,,,,,,,,
+Udyr,,,,,,,,
+Sylas,Zaahen,Yasuo,,,,,,
+Gragas,Zaahen,Ambessa,,,,,,
+Akshan,Yasuo,Malaphite,,,,,,
+Sejuani,,,,,,,,
+Graves,,,,,,,,
+Heimerdinger,Yasuo,,,,,,,
+Karma,Yasuo,Ambessa,SIon,,,,,
+Naafiri,,,,,,,,
+Cassiopeia,Yasuo,,,,,,,
+Tahm Kench,,,,,,,,
+Skarner,,,,,,,,
+Varus,Yasuo,Malaphite,,,,,,
+Shyvana,,,,,,,,`;
+
+        // Lista Twoich głównych postaci
+        const myChampionPool = ['yone', 'sion', 'renekton', 'zaahen', 'ambessa'];
+
+        let database = [];
+
+        // Inicjalizacja
+        function init() {
+            parseCSV(defaultCSV);
+            setupEventListeners();
+            displayResults('');
+        }
+
+        // Parsowanie tekstu CSV do tablicy obiektów
+        function parseCSV(csvText) {
+            database = [];
+            const lines = csvText.split('\n');
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const parts = line.split(',');
+                const enemy = parts[0].trim();
+                const counters = parts.slice(1)
+                                      .map(c => c.trim())
+                                      .filter(c => c !== '');
+                
+                if (enemy) {
+                    database.push({ enemy, counters });
+                }
+            }
+        }
+
+        // Przygotowanie linku do obrazka
+        function getImageUrl(champName) {
+            let name = champName;
+            const overrides = {
+                "malaphite": "Malphite",
+                "malaphte": "Malphite",
+                "renkton": "Renekton",
+                "orn": "Ornn",
+                "sion": "Sion",
+                "k'sante": "KSante",
+                "cho'gath": "Chogath",
+                "dr. mundo": "DrMundo",
+                "wukong": "MonkeyKing",
+                "rek'sai": "RekSai"
+            };
+
+            const lowerName = name.toLowerCase();
+            if (overrides[lowerName]) {
+                name = overrides[lowerName];
+            } else {
+                name = name.replace(/['\s.]/g, '');
+                name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+            }
+
+            return `http://ddragon.leagueoflegends.com/cdn/16.8.1/img/champion/${name}.png`;
+        }
+
+        // Wyświetlanie wyników
+        function displayResults(query) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            if (!query) {
+                container.innerHTML = '<div class="no-results">Wpisz nazwę championa, aby zobaczyć kontry.</div>';
+                return;
+            }
+
+            const searchLower = query.toLowerCase();
+            const match = database.find(entry => entry.enemy.toLowerCase() === searchLower) || 
+                          database.find(entry => entry.enemy.toLowerCase().includes(searchLower));
+
+            if (!match) {
+                container.innerHTML = '<div class="no-results">Nie znaleziono takiego championa w bazie.</div>';
+                return;
+            }
+
+            const header = document.createElement('div');
+            header.className = 'results-header';
+            header.innerHTML = `Gramy na: <strong>${match.enemy}</strong>`;
+            container.appendChild(header);
+
+            if (match.counters.length === 0) {
+                container.innerHTML += '<div class="no-results">Brak przypisanych kontr dla tego championa.</div>';
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'counters-grid';
+
+            // Rozdzielanie i sortowanie kontr: najpierw główny pool, potem reszta
+            const poolCounters = [];
+            const otherCounters = [];
+
+            match.counters.forEach(counter => {
+                const isPoolChampion = myChampionPool.includes(counter.toLowerCase().trim());
+                if (isPoolChampion) {
+                    poolCounters.push(counter);
+                } else {
+                    otherCounters.push(counter);
+                }
+            });
+
+            // Łączenie obu list w odpowiedniej kolejności
+            const sortedCounters = [...poolCounters, ...otherCounters];
+
+            // Renderowanie posortowanej listy
+            sortedCounters.forEach(counter => {
+                const card = document.createElement('div');
+                card.className = 'champion-card';
+                
+                const isPoolChampion = myChampionPool.includes(counter.toLowerCase().trim());
+                if (isPoolChampion) {
+                    card.classList.add('pool-champion');
+                }
+                
+                const imgUrl = getImageUrl(counter);
+                
+                card.innerHTML = `
+                    <img class="champion-icon" src="${imgUrl}" alt="${counter}" onerror="this.style.display='none'">
+                    <div class="champion-name">${counter}</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+        }
+
+        // Nasłuchiwanie zdarzeń
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                displayResults(e.target.value);
+            });
+
+            document.getElementById('csvFileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const text = event.target.result;
+                        parseCSV(text);
+                        alert('Baza danych została zaktualizowana!');
+                        
+                        const currentQuery = document.getElementById('searchInput').value;
+                        if (currentQuery) displayResults(currentQuery);
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
